@@ -6,13 +6,15 @@
  */
 
 class Game {
-  constructor(height, width) {
+  constructor(height, width, playerArr) {
     this.width = width;
     this.height = height;
-    this.currPlayer = 1; // active player: 1 or 2
+    this.playerArr = playerArr;
+    this.currPlayer = this.playerArr[0]; // active player: 1 or 2
     this.board = []; // array of rows, each row is array of cells  (board[y][x])
     this.makeBoard();
     this.makeHtmlBoard();
+    this.gameOver === false;
   }
 
   /** makeBoard: create in-JS board structure:
@@ -31,8 +33,8 @@ class Game {
     // make column tops (clickable area for adding a piece to that column)
     const top = document.createElement("tr");
     top.setAttribute("id", "column-top");
-    top.addEventListener("click", this.handleClick);
-
+    this.handleConnectClick = this.handleClick.bind(this);
+    top.addEventListener("click", this.handleConnectClick);
     for (let x = 0; x < this.width; x++) {
       const headCell = document.createElement("td");
       headCell.setAttribute("id", x);
@@ -71,9 +73,9 @@ class Game {
   placeInTable(y, x) {
     const piece = document.createElement("div");
     piece.classList.add("piece");
-    piece.classList.add(`p${this.currPlayer}`);
+    piece.classList.add(`p${this.currPlayer.color}`);
     piece.style.top = -50 * (y + 2);
-
+    piece.style.backgroundColor = this.currPlayer.color;
     const spot = document.getElementById(`${y}-${x}`);
     spot.append(piece);
   }
@@ -81,9 +83,12 @@ class Game {
   /** endGame: announce game end */
 
   endGame(msg) {
-    alert(msg);
+    setTimeout(() => alert(msg), 50);
     const top = document.querySelector("#column-top");
-    top.removeEventListener("click", this.handleClick);
+    top.removeEventListener("click", this.handleConnectClick);
+    this.gameOver === true;
+
+    //reset inputs
   }
 
   /** handleClick: handle click of column top to play piece */
@@ -91,7 +96,6 @@ class Game {
   handleClick(evt) {
     // get x from ID of clicked cell
     const x = +evt.target.id;
-
     // get next spot in column (if none, ignore click)
     const y = this.findSpotForCol(x);
     if (y === null) {
@@ -99,12 +103,11 @@ class Game {
     }
 
     // place piece in board and add to HTML table
-    this.board[y][x] = this.currPlayer;
+    this.board[y][x] = this.currPlayer.color;
     this.placeInTable(y, x);
-
     // check for win
     if (this.checkForWin()) {
-      return this.endGame(`Player ${this.currPlayer} won!`);
+      return this.endGame(`Player ${this.currPlayer.color} won!`);
     }
 
     // check for tie
@@ -113,26 +116,28 @@ class Game {
     }
 
     // switch players
-    this.currPlayer = this.currPlayer === 1 ? 2 : 1;
+    this.currPlayer =
+      this.currPlayer === this.playerArr[0]
+        ? this.playerArr[1]
+        : this.playerArr[0];
   }
 
   /** checkForWin: check board cell-by-cell for "does a win start here?" */
 
   checkForWin() {
-    function _win(cells) {
+    const _win = (cells) =>
       // Check four cells to see if they're all color of current player
       //  - cells: list of four (y, x) cells
       //  - returns true if all are legal coordinates & all match currPlayer
 
-      return cells.every(
+      cells.every(
         ([y, x]) =>
           y >= 0 &&
           y < this.height &&
           x >= 0 &&
           x < this.width &&
-          this.board[y][x] === this.currPlayer
+          this.board[y][x] === this.currPlayer.color
       );
-    }
 
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
@@ -172,7 +177,25 @@ class Game {
   }
 }
 
+class Player {
+  constructor(color) {
+    this.color = color;
+  }
+}
+
 const btn = document.querySelector("#start");
+
 btn.addEventListener("click", function (e) {
-  new Game(6, 7);
+  document.getElementById("board").innerHTML = "";
+  const colorInput1 = document.querySelector("#col1");
+  const colorInput2 = document.querySelector("#col2");
+  const player1 = new Player(colorInput1.value);
+  const player2 = new Player(colorInput2.value);
+  const playerArr = [player1, player2];
+
+  new Game(6, 7, playerArr);
+
+  //reset inputs
+  colorInput1.value = "";
+  colorInput2.value = "";
 });

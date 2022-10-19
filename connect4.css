@@ -15,11 +15,11 @@
   border-radius: 50%;
 }
 
-.piece.p1 {
+.piece.pred {
   background-color: red;
 }
 
-.piece.p2 {
+.piece.pblue {
   background-color: blue;
 }
 
